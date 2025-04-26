@@ -117,7 +117,7 @@ Analyze the provided request and determine if it's an emergency and if it belong
 
     # Use a cheaper model for this initial classification
     completion = client.beta.chat.completions.parse(
-        model="o4-mini",  # Cheaper than gpt-4
+        model="gpt-4o",  # Cheaper than gpt-4
         messages=messages,
         response_format=PreClassificationResult,
     )
