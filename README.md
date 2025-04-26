@@ -1,4 +1,4 @@
-# City311AI
+# 311 Service Requests using AI
 
 ## AI-Enhanced 311 Service Request System
 
@@ -44,8 +44,6 @@ flowchart TD
     G1 --- I2
     E --- I3
 ```
-
-*Note: Add your architecture diagram image to the repository*
 
 ## 🌟 Features
 
@@ -106,11 +104,10 @@ The Service Request data model represents a citizen's report about a city issue.
 - **ID**: Unique identifier for the request
 - **Request Type**: Category of the issue (pothole, graffiti, broken streetlight, etc.)
 - **Description**: Citizen's description of the problem
-- **Location**: Geographic point data for precise positioning
-- **Address**: Human-readable location description
+- **Location**: Geographic point data with latitude, longitude, address, neighborhood, city, state, and zip code information
 - **Reporter ID**: Optional identifier for the reporting citizen
 - **Priority**: Assigned urgency level (low, medium, high, critical)
-- **Status**: Current state of resolution (new, in progress, resolved, closed)
+- **Status**: Current state of resolution (new, in progress, resolved, closed, invalid)
 - **Timestamps**: Creation and update times
 - **Department**: City department assigned to resolve the issue
 - **Media**: Optional images of the reported issue
@@ -352,7 +349,7 @@ pytest test_integration.py
 
 ### Human Oversight
 
-- AI confidence scores below 0.8 trigger human review
+- Requests with overall confidence below 0.7, validation confidence below 0.8, or classification confidence below 0.75 trigger human review
 - Department staff can override AI classifications
 - System logs all AI decisions for auditing purposes
 
