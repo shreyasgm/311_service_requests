@@ -9,7 +9,9 @@ class UserInput(BaseModel):
 
     text: str
 
+
 # Service request supplemental data models
+
 
 class RequestPriority(str, Enum):
     LOW = "low"
@@ -79,6 +81,7 @@ class GeocodingResult(BaseModel):
 
 # Processed service request
 
+
 class ProcessedServiceRequest(BaseModel):
     """This is the fully processed result from the LLM pipeline"""
 
@@ -91,8 +94,8 @@ class ProcessedServiceRequest(BaseModel):
     created_at: datetime = Field(default_factory=datetime.now)
     status: RequestStatus = RequestStatus.NEW
 
-    @model_validator(mode='after')
-    def validate_classification_presence(cls, values):
+    @model_validator(mode="after")
+    def validate_classification_presence(cls, values):  # noqa: N805
         validation = values.get("validation")
         classification = values.get("classification")
 
@@ -111,7 +114,9 @@ class ProcessedServiceRequest(BaseModel):
             and self.classification is not None
         )
 
+
 # Dashboard / report models
+
 
 class DepartmentSummary(BaseModel):
     """Summary statistics for a department's service requests"""
