@@ -2,23 +2,6 @@ from openai import OpenAI
 import json
 from dotenv import load_dotenv
 import os
-from pydantic import BaseModel, Field
-
-# Define Pydantic models for validation
-class ClassificationResponse(BaseModel):
-    is_emergency: bool = Field(
-        description="TRUE if this is an emergency requiring immediate attention"
-    )
-    belongs_in_311: bool = Field(
-        description="TRUE if this request belongs in Boston's 311 non-emergency system"
-    )
-    reason: str = Field(
-        description="Brief explanation of the classification"
-    )
-    recommendation: str = Field(
-        description="Action to take based on classification",
-        default="PROCESS_NORMALLY"
-    )
 
 def pre_classify_request(conversation):
     """
@@ -32,7 +15,7 @@ def pre_classify_request(conversation):
         conversation (str): The user's message or conversation to classify
         
     Returns:
-        ClassificationResponse: Pydantic model with classification results
+        dict: Classification results with is_emergency, belongs_in_311, reason and recommendation
     """
     # Initialize OpenAI client
     load_dotenv()
@@ -130,45 +113,42 @@ Analyze the provided request and use the classify_311_request tool to provide yo
         }
     ]
     
+    # Use a cheaper model for this initial classification
+    response = client.chat.completions.create(
+        model="o4-mini",  # Cheaper than gpt-4
+        messages=messages,
+        tools=tools,
+        tool_choice={"type": "function", "function": {"name": "classify_311_request"}}  # Force use of the tool
+    )
+    
     try:
-        # Use a cheaper model for this initial classification
-        response = client.chat.completions.create(
-            model="o4-mini",  # Cheaper than gpt-4
-            messages=messages,
-            tools=tools,
-            tool_choice={"type": "function", "function": {"name": "classify_311_request"}}  # Force use of the tool
-        )
-        
         # Extract the tool call from the response
         tool_call = response.choices[0].message.tool_calls[0]
         
         # Parse the function arguments
         if tool_call.function.name == "classify_311_request":
-            classification_data = json.loads(tool_call.function.arguments)
+            classification = json.loads(tool_call.function.arguments)
             
             # Add a recommendation field based on the classification
-            if classification_data.get("is_emergency", False) and not classification_data.get("belongs_in_311", True):
+            if classification.get("is_emergency", False) and not classification.get("belongs_in_311", True):
                 recommendation = "REDIRECT_TO_911"
-            elif classification_data.get("is_emergency", False):
+            elif classification.get("is_emergency", False):
                 recommendation = "EXPEDITE"
-            elif not classification_data.get("belongs_in_311", True):
+            elif not classification.get("belongs_in_311", True):
                 recommendation = "REDIRECT_TO_OTHER_SERVICE"
             else:
                 recommendation = "PROCESS_NORMALLY"
                 
-            classification_data["recommendation"] = recommendation
-            
-            # Use Pydantic for validation and conversion
-            return ClassificationResponse(**classification_data)
+            classification["recommendation"] = recommendation
+            return classification
     
     except Exception as e:
-        print(f"Error during classification: {e}")
+        print(f"Error parsing classification: {e}")
     
     # Default to processing normally if there's an error
-    return ClassificationResponse(
-        is_emergency=False,
-        belongs_in_311=True,
-        recommendation="PROCESS_NORMALLY",
-        reason="Error processing request, defaulting to normal handling"
-    )
-
+    return {
+        "is_emergency": False,
+        "belongs_in_311": True,
+        "recommendation": "PROCESS_NORMALLY",
+        "reason": "Error processing request, defaulting to normal handling"
+    }
