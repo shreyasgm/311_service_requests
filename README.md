@@ -4,7 +4,46 @@
 
 City311AI is an intelligent civic infrastructure project that leverages AI to enhance traditional 311 non-emergency reporting systems. By combining natural language processing with geospatial analysis, this system aims to streamline how citizens report issues and how cities respond to them.
 
-![City311AI Architecture](./architecture-diagram.png)
+```mermaid
+flowchart TD
+    A[Citizen] -->|Phone Call| B1[Twilio]
+    A -->|Web Form| B2[React Frontend]
+    A -->|Mobile App| B3[React Native App]
+    
+    B1 -->|Speech-to-Text| C1[Input Processor]
+    B2 --> C1
+    B3 --> C1
+    
+    C1 -->|Natural Language| D1[LangGraph AI Orchestration]
+    
+    subgraph "AI Processing Layer"
+    D1 -->|Information Request| D2[Information Gathering Agent]
+    D2 -->|Complete Info| D3[Classification & Triage Agent]
+    D3 -->|Classified Request| D4[Geocoding & Enrichment]
+    D4 -->|Enriched Data| D5[Human Review Interface]
+    end
+    
+    D5 -->|Verified Request| E[MongoDB]
+    
+    E -->|Raw Data| F[Analytics Engine]
+    F -->|Processed Data| G1[Express.js API]
+    
+    G1 -->|Department Reports| H1[City Department Dashboards]
+    G1 -->|Status Updates| H2[Citizen Status Portal]
+    G1 -->|Aggregated Data| H3[Public Dashboard]
+    
+    subgraph "Deployment"
+    I1[Vercel - Frontend]
+    I2[Railway - Backend]
+    I3[MongoDB Atlas - Database]
+    end
+    
+    B2 --- I1
+    B3 --- I1
+    D1 --- I2
+    G1 --- I2
+    E --- I3
+```
 
 *Note: Add your architecture diagram image to the repository*
 
