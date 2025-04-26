@@ -249,3 +249,5 @@ pyrightconfig.json
 # End of https://www.toptal.com/developers/gitignore/api/python,nextjs,macos
 
 
+# Node.js dependencies
+**/node_modules/

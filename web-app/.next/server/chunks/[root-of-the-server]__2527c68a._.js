@@ -60,28 +60,13 @@ var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$ai$2f$dist$2
 ;
 const maxDuration = 30;
 async function POST(req) {
-    try {
-        if (!process.env.OPENAI_API_KEY) {
-            throw new Error('OPENAI_API_KEY is not set');
-        }
-        const { messages } = await req.json();
-        const result = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$ai$2f$dist$2f$index$2e$mjs__$5b$app$2d$route$5d$__$28$ecmascript$29$__$3c$locals$3e$__["streamText"])({
-            model: (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$ai$2d$sdk$2f$openai$2f$dist$2f$index$2e$mjs__$5b$app$2d$route$5d$__$28$ecmascript$29$__["openai"])('gpt-4-turbo'),
-            system: 'You are a helpful assistant.',
-            messages
-        });
-        return result.toDataStreamResponse();
-    } catch (error) {
-        console.error('Chat API Error:', error);
-        return new Response(JSON.stringify({
-            error: error instanceof Error ? error.message : 'An error occurred'
-        }), {
-            status: 500,
-            headers: {
-                'Content-Type': 'application/json'
-            }
-        });
-    }
+    const { messages } = await req.json();
+    const result = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$ai$2f$dist$2f$index$2e$mjs__$5b$app$2d$route$5d$__$28$ecmascript$29$__$3c$locals$3e$__["streamText"])({
+        model: (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$ai$2d$sdk$2f$openai$2f$dist$2f$index$2e$mjs__$5b$app$2d$route$5d$__$28$ecmascript$29$__["openai"])('gpt-4-turbo'),
+        system: 'You are a helpful assistant.',
+        messages
+    });
+    return result.toDataStreamResponse();
 }
 }}),
 
