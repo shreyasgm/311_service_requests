@@ -45,8 +45,6 @@ flowchart TD
     E --- I3
 ```
 
-*Note: Add your architecture diagram image to the repository*
-
 ## 🌟 Features
 
 - **Natural Language Processing**: Citizens can report issues in everyday language via phone or web
