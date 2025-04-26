@@ -1,65 +1,43 @@
-'use client';
-
-import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
+import DashboardTable from './DashboardTable';
 
 interface ServiceRequest {
   id: number;
   created_at: string;
-  // Add more fields based on your database schema
+  status: string;
+  type: string;
+  description: string;
+  priority: string;
+  location: string;
 }
 
-export default function Dashboard() {
-  const [requests, setRequests] = useState<ServiceRequest[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+export default async function Dashboard() {
+  console.log('Fetching initial requests from Supabase...');
+  const { data: requests, error } = await supabase
+    .from('service_requests')
+    .select('*')
+    .order('created_at', { ascending: false })
+    .limit(10);
 
-  useEffect(() => {
-    async function fetchRequests() {
-      try {
-        const { data, error } = await supabase
-          .from('service_requests')
-          .select('*')
-          .limit(10);
+  console.log('Supabase response:', { requests, error });
 
-        if (error) throw error;
-        setRequests(data || []);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'An error occurred');
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    fetchRequests();
-  }, []);
-
-  if (loading) return <div className="p-4">Loading...</div>;
-  if (error) return <div className="p-4 text-red-500">Error: {error}</div>;
+  if (error) {
+    console.error('Error fetching requests:', error);
+    return (
+      <div className="p-4 text-red-500 bg-red-50 rounded-lg">
+        Error: {error.message}
+      </div>
+    );
+  }
 
   return (
-    <div className="p-4">
-      <h1 className="text-2xl font-bold mb-4">Service Requests Dashboard</h1>
-      <div className="overflow-x-auto">
-        <table className="min-w-full bg-white border border-gray-200">
-          <thead>
-            <tr>
-              <th className="px-4 py-2 border-b">ID</th>
-              <th className="px-4 py-2 border-b">Created At</th>
-            </tr>
-          </thead>
-          <tbody>
-            {requests.map((request) => (
-              <tr key={request.id}>
-                <td className="px-4 py-2 border-b">{request.id}</td>
-                <td className="px-4 py-2 border-b">
-                  {new Date(request.created_at).toLocaleString()}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+    <div className="p-6 max-w-7xl mx-auto">
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Service Requests Dashboard</h1>
+        <p className="text-gray-600 dark:text-gray-300">Monitor and manage all service requests in one place</p>
       </div>
+
+      <DashboardTable initialRequests={requests} />
     </div>
   );
 } 
