@@ -3,8 +3,8 @@ import json
 from datetime import datetime, timedelta
 from dotenv import load_dotenv
 import os
-import fire
-from typing import Dict, Any, Optional
+import argparse
+from typing import Dict, Any
 from backend.classify_311 import pre_classify_request
 from backend.extractor import extract_311_request
 
@@ -86,63 +86,32 @@ def pipeline_311(conversation: str) -> Dict[str, Any]:
             "classification": classification
         }
 
-class CLI:
-    """Boston 311 Service Request Processing CLI"""
-    
-    def __init__(self):
-        # Load environment variables
-        load_dotenv()
-        
-        # Verify API key is loaded
-        if not os.environ.get("OPENAI_API_KEY"):
-            print("Warning: OPENAI_API_KEY not found in environment variables.")
-    
-    def process(self, message: str) -> None:
-        """
-        Process a 311 service request message and return structured data.
-        
-        Args:
-            message: The user's 311 service request message
-        """
-        try:
-            result = pipeline_311(message)
-            # Print formatted JSON output
-            print(json.dumps(result, indent=2))
-        except Exception as e:
-            print(f"Error processing request: {str(e)}")
-    
-    def batch(self, input_file: str, output_file: Optional[str] = None) -> None:
-        """
-        Process multiple 311 service requests from a file.
-        
-        Args:
-            input_file: Path to file with one request message per line
-            output_file: Optional path to save results (defaults to input_file.json)
-        """
-        if not output_file:
-            output_file = f"{os.path.splitext(input_file)[0]}.json"
-        
-        try:
-            results = []
-            with open(input_file, 'r') as f:
-                for line in f:
-                    line = line.strip()
-                    if line:
-                        result = pipeline_311(line)
-                        results.append(result)
-            
-            # Save results to output file
-            with open(output_file, 'w') as f:
-                json.dump(results, f, indent=2)
-            
-            print(f"Processed {len(results)} requests. Results saved to {output_file}")
-        
-        except Exception as e:
-            print(f"Error processing batch: {str(e)}")
-
 def main():
-    # Use Fire to automatically generate CLI
-    fire.Fire(CLI)
+    # Load environment variables
+    load_dotenv()
+    
+    # Verify API key is loaded
+    if not os.environ.get("OPENAI_API_KEY"):
+        print("Warning: OPENAI_API_KEY not found in environment variables.")
+    
+    # Create argument parser
+    parser = argparse.ArgumentParser(
+        description="Boston 311 Service Request Processing CLI"
+    )
+    
+    # Add arguments
+    parser.add_argument("message", help="The user's 311 service request message")
+    
+    # Parse arguments
+    args = parser.parse_args()
+    
+    try:
+        # Process the request
+        result = pipeline_311(args.message)
+        # Print formatted JSON output
+        print(json.dumps(result, indent=2))
+    except Exception as e:
+        print(f"Error processing request: {str(e)}")
 
 if __name__ == "__main__":
     main()

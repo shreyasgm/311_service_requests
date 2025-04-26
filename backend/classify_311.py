@@ -1,55 +1,60 @@
 from openai import OpenAI
-import json
 from dotenv import load_dotenv
-import os
+from enum import Enum
+from pydantic import BaseModel, Field
 
-def pre_classify_request(conversation):
+from backend.data_models import TriageResult, RequestPriority
+
+
+class RequestRecommendation(str, Enum):
+    REDIRECT_TO_911 = "REDIRECT_TO_911"
+    EXPEDITE = "EXPEDITE"
+    REDIRECT_TO_OTHER_SERVICE = "REDIRECT_TO_OTHER_SERVICE"
+    PROCESS_NORMALLY = "PROCESS_NORMALLY"
+
+
+class PreClassificationResult(BaseModel):
+    """
+    Initial classification of a 311 service request to determine
+    if it's an emergency and if it belongs in the 311 system.
+    """
+
+    is_emergency: bool = Field(
+        ...,
+        description="TRUE if this is an emergency requiring immediate attention (defined as an immediate threat to life, safety, or critical infrastructure)",
+    )
+    belongs_in_311: bool = Field(
+        ...,
+        description="TRUE if this request belongs in Boston's 311 non-emergency system",
+    )
+    reason: str = Field(
+        ..., description="Brief explanation of the classification and reasoning"
+    )
+    recommendation: RequestRecommendation = Field(
+        default=RequestRecommendation.PROCESS_NORMALLY,
+        description="Action recommendation based on classification (REDIRECT_TO_911, EXPEDITE, REDIRECT_TO_OTHER_SERVICE, or PROCESS_NORMALLY)",
+    )
+
+
+def pre_classify_request(conversation: str) -> PreClassificationResult:
     """
     Pre-classify a conversation to determine if it's:
     1. An emergency (needs immediate attention)
     2. Belongs in the 311 system (vs being redirected elsewhere)
-    
+
     Uses a cheaper model to save costs before more detailed processing.
-    
+
     Args:
-        conversation (str): The user's message or conversation to classify
-        
+        conversation: The user's message or conversation to classify
+
     Returns:
-        dict: Classification results with is_emergency, belongs_in_311, reason and recommendation
+        PreClassificationResult: Classification results with is_emergency,
+        belongs_in_311, reason and recommendation
     """
     # Initialize OpenAI client
     load_dotenv()
     client = OpenAI()
-    
-    # Define the tool schema for classification
-    tools = [
-        {
-            "type": "function",
-            "function": {
-                "name": "classify_311_request",
-                "description": "Classify if a request is an emergency and if it belongs in the Boston 311 system",
-                "parameters": {
-                    "type": "object",
-                    "properties": {
-                        "is_emergency": {
-                            "type": "boolean",
-                            "description": "TRUE if this is an emergency requiring immediate attention (defined as an immediate threat to life, safety, or critical infrastructure)"
-                        },
-                        "belongs_in_311": {
-                            "type": "boolean", 
-                            "description": "TRUE if this request belongs in Boston's 311 non-emergency system"
-                        },
-                        "reason": {
-                            "type": "string",
-                            "description": "Brief explanation of your classification"
-                        }
-                    },
-                    "required": ["is_emergency", "belongs_in_311", "reason"]
-                }
-            }
-        }
-    ]
-    
+
     # Create a detailed prompt for classification
     messages = [
         {
@@ -105,50 +110,74 @@ The following should be directed elsewhere:
   * Legal questions or advice
   * Social services not provided by the city
 
-Analyze the provided request and use the classify_311_request tool to provide your classification."""
+Analyze the provided request and determine if it's an emergency and if it belongs in the 311 system.""",
         },
-        {
-            "role": "user",
-            "content": conversation
-        }
+        {"role": "user", "content": conversation},
     ]
-    
+
     # Use a cheaper model for this initial classification
-    response = client.chat.completions.create(
+    completion = client.beta.chat.completions.parse(
         model="o4-mini",  # Cheaper than gpt-4
         messages=messages,
-        tools=tools,
-        tool_choice={"type": "function", "function": {"name": "classify_311_request"}}  # Force use of the tool
+        response_format=PreClassificationResult,
     )
-    
+
     try:
-        # Extract the tool call from the response
-        tool_call = response.choices[0].message.tool_calls[0]
-        
-        # Parse the function arguments
-        if tool_call.function.name == "classify_311_request":
-            classification = json.loads(tool_call.function.arguments)
-            
-            # Add a recommendation field based on the classification
-            if classification.get("is_emergency", False) and not classification.get("belongs_in_311", True):
-                recommendation = "REDIRECT_TO_911"
-            elif classification.get("is_emergency", False):
-                recommendation = "EXPEDITE"
-            elif not classification.get("belongs_in_311", True):
-                recommendation = "REDIRECT_TO_OTHER_SERVICE"
-            else:
-                recommendation = "PROCESS_NORMALLY"
-                
-            classification["recommendation"] = recommendation
-            return classification
-    
+        # Get the parsed response
+        result = completion.choices[0].message.parsed
+
+        # Determine recommendation based on classification
+        if result.is_emergency and not result.belongs_in_311:
+            result.recommendation = RequestRecommendation.REDIRECT_TO_911
+        elif result.is_emergency:
+            result.recommendation = RequestRecommendation.EXPEDITE
+        elif not result.belongs_in_311:
+            result.recommendation = RequestRecommendation.REDIRECT_TO_OTHER_SERVICE
+        else:
+            result.recommendation = RequestRecommendation.PROCESS_NORMALLY
+
+        return result
+
     except Exception as e:
-        print(f"Error parsing classification: {e}")
-    
+        print(f"Error processing classification: {e}")
+
     # Default to processing normally if there's an error
-    return {
-        "is_emergency": False,
-        "belongs_in_311": True,
-        "recommendation": "PROCESS_NORMALLY",
-        "reason": "Error processing request, defaulting to normal handling"
-    }
+    return PreClassificationResult(
+        is_emergency=False,
+        belongs_in_311=True,
+        reason="Error processing request, defaulting to normal handling",
+        recommendation=RequestRecommendation.PROCESS_NORMALLY,
+    )
+
+
+def create_triage_result(pre_classification: PreClassificationResult) -> TriageResult:
+    """
+    Convert a PreClassificationResult into a TriageResult for further processing.
+
+    Args:
+        pre_classification: The initial classification result
+
+    Returns:
+        TriageResult: A triage result with appropriate priority level
+    """
+    # Determine priority based on recommendation
+    priority = RequestPriority.MEDIUM  # Default
+
+    if pre_classification.recommendation == RequestRecommendation.EXPEDITE:
+        priority = RequestPriority.CRITICAL
+    elif pre_classification.recommendation == RequestRecommendation.REDIRECT_TO_911:
+        priority = RequestPriority.CRITICAL
+    elif pre_classification.recommendation == RequestRecommendation.PROCESS_NORMALLY:
+        priority = RequestPriority.MEDIUM
+    elif (
+        pre_classification.recommendation
+        == RequestRecommendation.REDIRECT_TO_OTHER_SERVICE
+    ):
+        priority = RequestPriority.LOW
+
+    return TriageResult(
+        is_emergency=pre_classification.is_emergency,
+        confidence=0.85,  # Default confidence level
+        reasoning=pre_classification.reason,
+        priority=priority,
+    )
