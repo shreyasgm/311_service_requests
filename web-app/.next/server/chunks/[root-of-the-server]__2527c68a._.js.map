@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": [],
-  "sections": [
-    {"offset": {"line": 6, "column": 0}, "map": {"version":3,"sources":[],"names":[],"mappings":"","debugId":null}},
-    {"offset": {"line": 52, "column": 0}, "map": {"version":3,"sources":["file:///Users/roc8917/Documents/GitHub/311_service_requests/web-app/src/app/api/chat/route.ts"],"sourcesContent":["import { openai } from '@ai-sdk/openai';\nimport { streamText } from 'ai';\n\n// Allow streaming responses up to 30 seconds\nexport const maxDuration = 30;\n\nexport async function POST(req: Request) {\n  const { messages } = await req.json();\n\n  const result = streamText({\n    model: openai('gpt-4-turbo'),\n    system: 'You are a helpful assistant.',\n    messages,\n  });\n\n  return result.toDataStreamResponse();\n} "],"names":[],"mappings":";;;;AAAA;AACA;;;AAGO,MAAM,cAAc;AAEpB,eAAe,KAAK,GAAY;IACrC,MAAM,EAAE,QAAQ,EAAE,GAAG,MAAM,IAAI,IAAI;IAEnC,MAAM,SAAS,CAAA,GAAA,sJAAA,CAAA,aAAU,AAAD,EAAE;QACxB,OAAO,CAAA,GAAA,yJAAA,CAAA,SAAM,AAAD,EAAE;QACd,QAAQ;QACR;IACF;IAEA,OAAO,OAAO,oBAAoB;AACpC","debugId":null}}]
-}
