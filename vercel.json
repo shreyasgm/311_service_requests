@@ -1,9 +1,5 @@
 {
   "version": 2,
-  "buildCommand": "cd web-app && npm install && npm run build",
-  "installCommand": "cd web-app && npm install",
-  "outputDirectory": "web-app/.next",
-  "framework": "nextjs",
   "builds": [
     {
       "src": "web-app/package.json",
@@ -16,4 +12,4 @@
       "dest": "web-app/$1"
     }
   ]
-} 
+}
