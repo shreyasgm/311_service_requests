@@ -40,14 +40,9 @@ def extract_311_request(conversation):
                             "type": "string",
                             "description": "Detailed description of the reported issue"
                         },
-                        "contact_method": {
-                            "type": "string",
-                            "enum": ["Constituent Call", "Citizens Connect App", "Online Form"],
-                            "description": "How the request was submitted"
-                        },
                         "priority": {
                             "type": "string",
-                            "enum": ["ONTIME", "OVERDUE"],
+                            "enum": ["HIGH", "MEDIUM", "LOW"],
                             "description": "Estimated priority of the request"
                         },
                         "additional_notes": {
@@ -61,7 +56,6 @@ def extract_311_request(conversation):
                         "location_address", 
                         "location_details",  # Added this to the required list
                         "description", 
-                        "contact_method", 
                         "priority",
                         "additional_notes"  # Also added this
                     ],
