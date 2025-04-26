@@ -145,8 +145,8 @@ The Report model captures aggregated insights for city officials:
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/city311ai.git
-cd city311ai
+git clone https://github.com/shreyasgm/311-service-requests.git
+cd 311-service-requests
 
 # Setup Python environment
 python -m venv venv
@@ -164,8 +164,7 @@ Create a `.env` file in the root directory with the following variables:
 
 ```
 # LLM Configuration
-LLM_PROVIDER=openai  # or anthropic, google
-LLM_API_KEY=your_api_key
+OPENAI_API_KEY=your_api_key
 
 # Twilio Configuration
 TWILIO_ACCOUNT_SID=your_account_sid
