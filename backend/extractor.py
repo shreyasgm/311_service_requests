@@ -9,6 +9,7 @@ class ServiceRequestPriority(str, Enum):
     HIGH = "HIGH"
     MEDIUM = "MEDIUM"
     LOW = "LOW"
+    CRITICAL = "CRITICAL"
 
 
 class ServiceRequest(BaseModel):
@@ -16,10 +17,31 @@ class ServiceRequest(BaseModel):
 
     service_type: str = Field(
         ...,
-        description="Primary category of service request (e.g., Housing, Transportation, Public Works)",
+        description=""" Primary category of service request based on department (e.g., Housing, Transportation, Public Works)
+        ('Public Works', 'Responsible for infrastructure maintenance'),
+        ('Police', 'Handles non-emergency police matters'),
+        ('Sanitation', 'Manages waste collection and disposal'),
+        ('Transportation', 'Manages roads, traffic, and parking'),
+        ('Parks & Recreation', 'Maintains public parks and recreational areas'),
+        ('Health Department', 'Handles public health concerns'),
+        ('Animal Control', 'Manages animal-related issues'),
+        ('Other', 'Any other service request not listed above');
+        """
     )
     service_subtype: str = Field(
-        ..., description="More specific subcategory of the service request"
+        ..., description="""
+        fill in the request type based on the service type, use these descriptions or similar:
+        ('Pothole', 'Report of a pothole in a roadway'),
+        ('Noise Complaint', 'Report of excessive noise'),
+        ('Graffiti', 'Report of graffiti on public property'),
+        ('Abandoned Vehicle', 'Report of abandoned vehicle on public property'),
+        ('Streetlight Outage', 'Report of a malfunctioning streetlight'),
+        ('Trash Collection', 'Issues with trash or recycling collection'),
+        ('Sidewalk Repair', 'Report of damaged sidewalk'),
+        ('Tree Issue', 'Report of fallen tree or branch'),
+        ('Water Leak', 'Report of water leak on public property'),
+        ('Rodent Sighting', 'Report of rat or mice infestation')
+        """
     )
     location_address: str = Field(..., description="Full street address of the issue")
     location_details: str | None = Field(
