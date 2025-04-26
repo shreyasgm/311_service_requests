@@ -246,4 +246,8 @@ poetry.toml
 # LSP config files
 pyrightconfig.json
 
+#folder for Jupyter notebooks
+notebooks/
+
+
 # End of https://www.toptal.com/developers/gitignore/api/python,nextjs,macos
