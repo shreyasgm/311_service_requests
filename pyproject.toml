@@ -20,6 +20,8 @@ dependencies = [
     "langsmith",
     "streamlit",
     "ruff==0.11.0",
+    "ipykernel>=6.29.5",
+    "jupyter>=1.1.1",
 ]
 
 [project.urls]
