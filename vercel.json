@@ -13,13 +13,7 @@
   "routes": [
     {
       "src": "/(.*)",
-      "dest": "/web-app/$1"
-    }
-  ],
-  "rewrites": [
-    {
-      "source": "/(.*)",
-      "destination": "/web-app/$1"
+      "dest": "web-app/$1"
     }
   ]
 } 
