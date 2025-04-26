@@ -1,7 +1,52 @@
 [project]
-name = "city-service-requests"
+name = "311-service-requests"
 version = "0.1.0"
-description = "Add your description here"
+description = "AI-powered tool to receive and process 311 service requests"
 readme = "README.md"
 requires-python = ">=3.12"
-dependencies = []
+dependencies = [
+    # Core dependencies shared across all components
+    "pydantic>=2",
+    "python-dotenv>=1",
+    "tqdm",
+]
+
+[project.urls]
+Homepage = "https://github.com/shreyasgm/311-service-requests"
+Repository = "https://github.com/shreyasgm/311-service-requests"
+"Bug Tracker" = "https://github.com/shreyasgm/311-service-requests/issues"
+
+
+[tool.ruff]
+# Basic linting configuration
+line-length = 88
+target-version = "py312"
+lint.select = [
+    "E",    # Critical errors
+    "F",    # Pyflakes
+    "B",    # Bug detection
+    "N",    # Naming
+    "UP",   # Python upgrades
+]
+
+
+# Make documentation and type annotation rules generate warnings instead of errors
+[tool.ruff.lint.per-file-ignores]
+"**/*" = ["D", "ANN", "E722", "E501", "F841"]  # Ignore documentation, type annotations, bare except, and unused vars
+
+# Configure specific documentation rules
+[tool.ruff.lint.pydocstyle]
+convention = "google"  # Use Google-style docstrings
+
+# Configure Ruff to handle formatting
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+line-ending = "auto"
+skip-magic-trailing-comma = false
+
+# Configure import sorting
+[tool.ruff.lint.isort]
+known-first-party = ["311_service_requests"]
+force-single-line = false
+section-order = ["future", "standard-library", "third-party", "first-party", "local-folder"]
