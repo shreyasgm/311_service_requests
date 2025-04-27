@@ -160,12 +160,5 @@ JOIN request_types rt ON sr.request_type_id = rt.id
 JOIN statuses s ON sr.status_id = s.id
 WHERE sr.latitude IS NOT NULL AND sr.longitude IS NOT NULL;
 
--- Add Row-Level Security policies
-ALTER TABLE service_requests ENABLE ROW LEVEL SECURITY;
-ALTER TABLE request_types ENABLE ROW LEVEL SECURITY;
-ALTER TABLE departments ENABLE ROW LEVEL SECURITY;
-ALTER TABLE statuses ENABLE ROW LEVEL SECURITY;
-ALTER TABLE priorities ENABLE ROW LEVEL SECURITY;
-ALTER TABLE request_history ENABLE ROW LEVEL SECURITY;
-ALTER TABLE ai_analysis_results ENABLE ROW LEVEL SECURITY;
-ALTER TABLE request_type_department_mapping ENABLE ROW LEVEL SECURITY;
+
+-- Row-Level Security has been disabled for all tables

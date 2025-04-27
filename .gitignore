@@ -3,17 +3,28 @@
 CLAUDE.md
 data/
 .mcp.json
+.mcp.json*
 
 # Frontend
 # dependencies
 /node_modules
+frontend/node_modules
 
 # next.js
+**/.next/
+**/.next/**
 /.next/
+/.next/**
+frontend/.next/
+frontend/.next/**
+
+# out
 /out/
+frontend/out/
 
 # production
 /build
+frontend/build
 
 # debug
 npm-debug.log*
@@ -77,7 +88,12 @@ Temporary Items
 /coverage
 
 # next.js
+**/.next/
+**/.next/**
 /.next/
+/.next/**
+frontend/.next/
+frontend/.next/**
 /out/
 
 # production
