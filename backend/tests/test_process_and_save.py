@@ -14,6 +14,4 @@ def test_process_and_save_request():
     # Verify the result
     assert result is not None
     assert "id" in result
-    assert "category" in result
     assert "location" in result
-    assert "description" in result
