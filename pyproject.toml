@@ -23,6 +23,11 @@ dependencies = [
     "ipykernel>=6.29.5",
     "jupyter>=1.1.1",
     "fire>=0.7.0",
+    "asyncpg>=0.30.0",
+    "psycopg2>=2.9.10",
+    "psycopg2-binary",
+    "pytest>=8.3.5",
+    "supabase>=2.15.0",
 ]
 
 [project.urls]
