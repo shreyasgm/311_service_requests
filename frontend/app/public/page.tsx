@@ -44,7 +44,7 @@ export default function PublicPortal() {
             official city 311 portal.
           </p>
           <a
-            href="https://www.boston.gov/departments/311"
+            href="https://311.boston.gov/"
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center text-blue-600 hover:text-blue-800"

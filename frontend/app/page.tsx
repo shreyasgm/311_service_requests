@@ -63,7 +63,7 @@ export default function Home() {
             <h3 className="text-xl font-semibold mb-2">Need to report an issue?</h3>
             <p className="text-gray-600 mb-4">Visit the official city 311 portal to submit a new service request.</p>
             <a
-              href="https://www.boston.gov/departments/311"
+              href="https://311.boston.gov/"
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center text-blue-600 hover:text-blue-800"

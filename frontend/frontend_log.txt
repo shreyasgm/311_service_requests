@@ -1,0 +1,32 @@
+
+> my-v0-project@0.1.0 dev /Users/shg309/Dropbox (Personal)/Education/hks_cid_growth_lab/misc/311_service_requests/frontend
+> next dev
+
+   ▲ Next.js 15.2.4
+   - Local:        http://localhost:3000
+   - Network:      http://192.168.1.158:3000
+   - Environments: .env.local
+
+ ✓ Starting...
+ ✓ Ready in 1386ms
+ ○ Compiling / ...
+ ✓ Compiled / in 2s (743 modules)
+ GET / 200 in 2334ms
+ ✓ Compiled in 327ms (324 modules)
+ ✓ Compiled /middleware in 279ms (243 modules)
+ ○ Compiling /dashboard/login ...
+ ✓ Compiled /dashboard/login in 895ms (935 modules)
+ GET /dashboard/login 200 in 1068ms
+ ○ Compiling /public ...
+ ✓ Compiled /public in 977ms (1278 modules)
+Supabase client initialized with URL: https://fzwxzimochqbtoktuqof.supabase.co
+ GET /public 200 in 1276ms
+ ✓ Compiled in 677ms (1292 modules)
+ GET /public 200 in 74ms
+ ✓ Compiled in 271ms (1292 modules)
+ GET /public 200 in 62ms
+ ✓ Compiled in 360ms (1292 modules)
+ GET /public 200 in 64ms
+Supabase client initialized with URL: https://fzwxzimochqbtoktuqof.supabase.co
+ GET /public 200 in 181ms
+[?25h

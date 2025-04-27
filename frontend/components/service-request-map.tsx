@@ -7,6 +7,7 @@ import { getPublicServiceRequests } from "@/lib/service-requests"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { formatDistanceToNow } from "date-fns"
+import type { LatLngExpression } from "leaflet"
 
 // Dynamically import Leaflet components with no SSR to avoid hydration issues
 const MapContainer = dynamic(() => import("react-leaflet").then((mod) => mod.MapContainer), { ssr: false })
@@ -43,8 +44,22 @@ export function ServiceRequestMap({ filter }: { filter?: MapFilter }) {
     loadRequests()
   }, [filter])
 
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      import("leaflet").then(L => {
+        // @ts-ignore
+        delete L.Icon.Default.prototype._getIconUrl
+        L.Icon.Default.mergeOptions({
+          iconRetinaUrl: "/marker-icon-2x.png",
+          iconUrl: "/marker-icon.png",
+          shadowUrl: "/marker-shadow.png",
+        })
+      })
+    }
+  }, [])
+
   // Default center coordinates (Boston)
-  const center: [number, number] = [42.3601, -71.0589]
+  const center: LatLngExpression = [42.3601, -71.0589]
 
   if (loading) {
     return (
@@ -82,12 +97,16 @@ export function ServiceRequestMap({ filter }: { filter?: MapFilter }) {
   return (
     <div className="h-[70vh] rounded-lg overflow-hidden shadow-md">
       {mapReady && (
-        <MapContainer center={center} zoom={13} style={{ height: "100%", width: "100%" }}>
+        <MapContainer 
+          center={center} 
+          zoom={13} 
+          style={{ height: "100%", width: "100%" }}
+          className="z-0"
+        >
           <TileLayer
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           />
-
           {requests.map((request) =>
             request.latitude && request.longitude ? (
               <Marker key={request.id} position={[request.latitude, request.longitude]}>

@@ -45,7 +45,7 @@ export default function ReportPage() {
                 confirmation number.
               </p>
               <Button className="w-full" asChild>
-                <a href="https://www.boston.gov/departments/311" target="_blank" rel="noopener noreferrer">
+                <a href="https://311.boston.gov/" target="_blank" rel="noopener noreferrer">
                   Visit Portal
                 </a>
               </Button>
@@ -65,7 +65,7 @@ export default function ReportPage() {
               </p>
               <Button className="w-full" asChild>
                 <a
-                  href="https://www.boston.gov/departments/311/311-your-phone"
+                  href="https://311.boston.gov//311-your-phone"
                   target="_blank"
                   rel="noopener noreferrer"
                 >
