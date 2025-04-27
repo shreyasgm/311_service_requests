@@ -37,8 +37,8 @@ CREATE TABLE request_types (
 -- Request Type to Department mapping
 CREATE TABLE request_type_department_mapping (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  request_type_id UUID REFERENCES request_types(id) ON DELETE CASCADE,
-  department_id UUID REFERENCES departments(id) ON DELETE CASCADE,
+  request_type_id UUID NOT NULL REFERENCES request_types(id) ON DELETE CASCADE,
+  department_id UUID NOT NULL REFERENCES departments(id) ON DELETE CASCADE,
   is_primary BOOLEAN DEFAULT FALSE,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   UNIQUE(request_type_id, department_id)
@@ -52,7 +52,7 @@ CREATE TABLE service_requests (
   summary TEXT NOT NULL,
   request_type_id UUID REFERENCES request_types(id),
   department_id UUID REFERENCES departments(id),
-  status_id UUID REFERENCES statuses(id) NOT NULL,
+  status_id UUID NOT NULL REFERENCES statuses(id),
   priority_id UUID REFERENCES priorities(id),
   location GEOGRAPHY(POINT),
   address TEXT,
@@ -66,8 +66,8 @@ CREATE TABLE service_requests (
 CREATE TABLE request_history (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  service_request_id UUID REFERENCES service_requests(id) ON DELETE CASCADE,
-  status_id UUID REFERENCES statuses(id),
+  service_request_id UUID NOT NULL REFERENCES service_requests(id) ON DELETE CASCADE,
+  status_id UUID NOT NULL REFERENCES statuses(id),
   notes TEXT,
   updated_by TEXT NOT NULL
 );
@@ -75,7 +75,7 @@ CREATE TABLE request_history (
 -- AI Analysis Results table to store LLM processing details
 CREATE TABLE ai_analysis_results (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  service_request_id UUID REFERENCES service_requests(id) ON DELETE CASCADE,
+  service_request_id UUID NOT NULL REFERENCES service_requests(id) ON DELETE CASCADE,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   triage_result JSONB DEFAULT '{}'::jsonb,
   validation_result JSONB DEFAULT '{}'::jsonb,
@@ -159,78 +159,6 @@ JOIN departments d ON sr.department_id = d.id
 JOIN request_types rt ON sr.request_type_id = rt.id
 JOIN statuses s ON sr.status_id = s.id
 WHERE sr.latitude IS NOT NULL AND sr.longitude IS NOT NULL;
-
--- Initial data population for reference tables
-
--- Populate statuses
-INSERT INTO statuses (name, description) VALUES
-  ('New', 'Request has been received but not yet processed'),
-  ('In Progress', 'Request is being actively addressed'),
-  ('Open', 'Open request that\'s being worked on'),
-  ('Closed', 'Request has been completed and closed'),
-  ('Invalid', 'Request was determined to be invalid or not actionable');
-
--- Populate priorities
-INSERT INTO priorities (name, description, target_response_time) VALUES
-  ('Low', 'Non-urgent issues', '7 days'),
-  ('Medium', 'Standard priority', '3 days'),
-  ('High', 'Urgent but not emergency', '24 hours'),
-  ('Critical', 'Requires immediate attention', '4 hours');
-
--- Populate departments
-INSERT INTO departments (name, description) VALUES
-  ('Public Works', 'Responsible for infrastructure maintenance'),
-  ('Police', 'Handles non-emergency police matters'),
-  ('Sanitation', 'Manages waste collection and disposal'),
-  ('Transportation', 'Manages roads, traffic, and parking'),
-  ('Parks & Recreation', 'Maintains public parks and recreational areas'),
-  ('Health Department', 'Handles public health concerns'),
-  ('Animal Control', 'Manages animal-related issues');
-
--- Populate request types
-INSERT INTO request_types (name, description) VALUES
-  ('Pothole', 'Report of a pothole in a roadway'),
-  ('Noise Complaint', 'Report of excessive noise'),
-  ('Graffiti', 'Report of graffiti on public property'),
-  ('Abandoned Vehicle', 'Report of abandoned vehicle on public property'),
-  ('Streetlight Outage', 'Report of a malfunctioning streetlight'),
-  ('Trash Collection', 'Issues with trash or recycling collection'),
-  ('Sidewalk Repair', 'Report of damaged sidewalk'),
-  ('Tree Issue', 'Report of fallen tree or branch'),
-  ('Water Leak', 'Report of water leak on public property'),
-  ('Rodent Sighting', 'Report of rat or mice infestation');
-
--- Populate request type to department mapping
-INSERT INTO request_type_department_mapping (request_type_id, department_id, is_primary) VALUES
-  ((SELECT id FROM request_types WHERE name = 'Pothole'), 
-   (SELECT id FROM departments WHERE name = 'Public Works'), TRUE),
-  
-  ((SELECT id FROM request_types WHERE name = 'Noise Complaint'), 
-   (SELECT id FROM departments WHERE name = 'Police'), TRUE),
-  
-  ((SELECT id FROM request_types WHERE name = 'Graffiti'), 
-   (SELECT id FROM departments WHERE name = 'Public Works'), TRUE),
-  
-  ((SELECT id FROM request_types WHERE name = 'Abandoned Vehicle'), 
-   (SELECT id FROM departments WHERE name = 'Police'), TRUE),
-  
-  ((SELECT id FROM request_types WHERE name = 'Streetlight Outage'), 
-   (SELECT id FROM departments WHERE name = 'Public Works'), TRUE),
-  
-  ((SELECT id FROM request_types WHERE name = 'Trash Collection'), 
-   (SELECT id FROM departments WHERE name = 'Sanitation'), TRUE),
-  
-  ((SELECT id FROM request_types WHERE name = 'Sidewalk Repair'), 
-   (SELECT id FROM departments WHERE name = 'Public Works'), TRUE),
-  
-  ((SELECT id FROM request_types WHERE name = 'Tree Issue'), 
-   (SELECT id FROM departments WHERE name = 'Parks & Recreation'), TRUE),
-  
-  ((SELECT id FROM request_types WHERE name = 'Water Leak'), 
-   (SELECT id FROM departments WHERE name = 'Public Works'), TRUE),
-  
-  ((SELECT id FROM request_types WHERE name = 'Rodent Sighting'), 
-   (SELECT id FROM departments WHERE name = 'Health Department'), TRUE);
 
 -- Add Row-Level Security policies
 ALTER TABLE service_requests ENABLE ROW LEVEL SECURITY;
