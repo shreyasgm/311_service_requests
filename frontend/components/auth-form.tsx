@@ -4,7 +4,8 @@ import type React from "react"
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { supabase } from "@/lib/supabase"
+import { createBrowserClient } from "@supabase/ssr"
+import { SUPABASE_URL, SUPABASE_ANON_KEY } from "@/app/env"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -17,28 +18,48 @@ export function AuthForm() {
   const [password, setPassword] = useState("")
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [success, setSuccess] = useState(false)
   const router = useRouter()
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
     setError(null)
+    setSuccess(false)
 
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      const supabase = createBrowserClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+      
+      // Attempt to sign in
+      const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       })
 
       if (error) {
+        // Show error if login fails
+        setError(`Login failed: ${error.message}`)
         throw error
       }
 
-      // Redirect to dashboard on successful login
-      router.push("/dashboard")
+      if (!data.session) {
+        // If no session is returned, show error
+        setError("Login succeeded but no session was created. The email may not be verified.")
+        return
+      }
+
+      // Show success message
+      setSuccess(true)
+      
+      // Refresh the page to trigger middleware redirect
       router.refresh()
+      
+      // Redirect after a brief delay to show the success message
+      setTimeout(() => {
+        router.push("/dashboard")
+      }, 500)
     } catch (error: any) {
-      setError(error.message || "An error occurred during login")
+      // Error already set above
     } finally {
       setLoading(false)
     }
@@ -55,6 +76,12 @@ export function AuthForm() {
           <Alert variant="destructive" className="mb-4">
             <AlertCircle className="h-4 w-4" />
             <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
+        {success && (
+          <Alert variant="default" className="mb-4">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>Login successful! Redirecting to dashboard...</AlertDescription>
           </Alert>
         )}
         <form onSubmit={handleLogin}>
@@ -86,8 +113,24 @@ export function AuthForm() {
           </div>
         </form>
       </CardContent>
-      <CardFooter className="flex justify-center">
-        <p className="text-sm text-gray-500">This area is restricted to authorized city staff only.</p>
+      <CardFooter className="flex flex-col items-center">
+        <p className="text-sm text-gray-500 mb-4">This area is restricted to authorized city staff only.</p>
+        
+        {/* Troubleshooting section */}
+        {error && error.startsWith("Login successful") && (
+          <div className="mt-4 p-4 border border-gray-200 rounded-md w-full">
+            <h3 className="text-sm font-medium mb-2">Troubleshooting</h3>
+            <p className="text-sm text-gray-600 mb-2">
+              If the automatic redirect isn't working, you can try the manual link below:
+            </p>
+            <a 
+              href="/dashboard" 
+              className="text-sm text-blue-600 hover:underline"
+            >
+              Go to Dashboard Manually
+            </a>
+          </div>
+        )}
       </CardFooter>
     </Card>
   )

@@ -109,6 +109,12 @@ uv sync
 uv run ruff check .                          # Run linter
 uv run ruff format .                         # Format code
 
+# Running the frontend
+cd frontend && pnpm dev
+
+# Running the frontend in the background
+cd frontend && nohup pnpm dev > /dev/null 2>&1 & echo $!
+
 ```
 
 ## Code Style Guidelines

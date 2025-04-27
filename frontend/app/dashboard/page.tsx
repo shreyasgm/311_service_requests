@@ -1,16 +1,14 @@
-"use client"
-
-import { useState } from "react"
+import { Suspense } from "react"
 import { DashboardNav } from "@/components/dashboard-nav"
 import { StatsCards } from "@/components/stats-cards"
 import { StatsCharts } from "@/components/stats-charts"
-import { DashboardFilter } from "@/components/dashboard-filter"
-import { RequestsTable } from "@/components/requests-table"
-import type { MapFilter } from "@/types"
+import { requireUser } from "@/lib/auth"
+import DashboardClient from "./dashboard-client"
 
-export default function DashboardPage() {
-  const [filter, setFilter] = useState<MapFilter>({})
-
+export default async function DashboardPage() {
+  // This ensures the user is logged in
+  const user = await requireUser()
+  
   return (
     <div className="min-h-screen bg-gray-50">
       <DashboardNav />
@@ -26,11 +24,9 @@ export default function DashboardPage() {
 
           <StatsCharts />
 
-          <div className="mt-8">
-            <h2 className="text-xl font-bold mb-4">Recent Requests</h2>
-            <DashboardFilter onFilterChange={setFilter} />
-            <RequestsTable filter={filter} />
-          </div>
+          <Suspense fallback={<div>Loading recent requests...</div>}>
+            <DashboardClient />
+          </Suspense>
         </div>
       </main>
     </div>

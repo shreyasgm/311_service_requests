@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server"
 import type { NextRequest } from "next/server"
-import { createMiddlewareClient } from "@supabase/auth-helpers-nextjs"
+import { createServerClient } from "@supabase/ssr"
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./app/env"
 
 // Validate environment variables at startup
@@ -9,28 +9,71 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
 }
 
 export async function middleware(req: NextRequest) {
-  // Create a Supabase client configured to use cookies
   const res = NextResponse.next()
-  const supabase = createMiddlewareClient({ req, res })
+  
+  try {
+    // Create a Supabase client configured to use cookies
+    const supabase = createServerClient(
+      SUPABASE_URL,
+      SUPABASE_ANON_KEY,
+      {
+        cookies: {
+          get(name: string) {
+            return req.cookies.get(name)?.value
+          },
+          set(name: string, value: string, options: { path: string; maxAge: number; domain?: string; sameSite?: 'lax' | 'strict' | 'none'; secure?: boolean }) {
+            res.cookies.set({
+              name,
+              value,
+              ...options,
+            })
+          },
+          remove(name: string, options: { path: string; domain?: string }) {
+            res.cookies.set({
+              name,
+              value: '',
+              ...options,
+              maxAge: 0,
+            })
+          },
+        },
+      }
+    )
 
-  // Refresh session if expired
-  const {
-    data: { session },
-  } = await supabase.auth.getSession()
+    // Refresh session if expired
+    const { data: { session } } = await supabase.auth.getSession()
 
-  // If no session and trying to access dashboard (except login page)
-  if (!session && req.nextUrl.pathname.startsWith("/dashboard") && !req.nextUrl.pathname.includes("/login")) {
-    const redirectUrl = new URL("/dashboard/login", req.url)
-    return NextResponse.redirect(redirectUrl)
+    // Log session state for debugging (this will appear in server logs)
+    console.log("Middleware: URL =", req.nextUrl.pathname)
+    console.log("Middleware: Session exists =", !!session)
+    
+    // If on dashboard login page, check for URL parameters that might indicate auth callback
+    if (req.nextUrl.pathname === "/dashboard/login") {
+      const params = req.nextUrl.searchParams
+      if (params.has("error") || params.has("error_description")) {
+        console.log("Auth callback error:", params.get("error"), params.get("error_description"))
+      }
+    }
+
+    // If no session and trying to access dashboard (except login page)
+    if (!session && req.nextUrl.pathname.startsWith("/dashboard") && !req.nextUrl.pathname.includes("/login")) {
+      console.log("Redirecting to login (no session)")
+      const redirectUrl = new URL("/dashboard/login", req.url)
+      return NextResponse.redirect(redirectUrl)
+    }
+
+    // If session exists and trying to access login page, redirect to dashboard
+    if (session && req.nextUrl.pathname === "/dashboard/login") {
+      console.log("Redirecting to dashboard (session exists)")
+      const redirectUrl = new URL("/dashboard", req.url)
+      return NextResponse.redirect(redirectUrl)
+    }
+
+    return res
+  } catch (error) {
+    console.error("Middleware error:", error)
+    return res
   }
-
-  // If session exists and trying to access login page, redirect to dashboard
-  if (session && req.nextUrl.pathname === "/dashboard/login") {
-    const redirectUrl = new URL("/dashboard", req.url)
-    return NextResponse.redirect(redirectUrl)
-  }
-
-  return res
 }
 
 export const config = {

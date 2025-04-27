@@ -1,8 +1,12 @@
 import { AuthForm } from "@/components/auth-form"
 import { BarChart3 } from "lucide-react"
 import Link from "next/link"
+import { requireNoUser } from "@/lib/auth"
 
-export default function LoginPage() {
+export default async function LoginPage() {
+  // Redirect to dashboard if already logged in
+  await requireNoUser()
+  
   return (
     <div className="min-h-screen flex flex-col">
       <header className="bg-white shadow-sm">
