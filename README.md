@@ -95,6 +95,36 @@ flowchart TD
    - Updates citizens on request status
    - Creates public-facing dashboards for transparency
 
+
+## Common Commands
+
+```bash
+# Navigate to the project root
+cd "/Users/shg309/Dropbox (Personal)/Education/hks_cid_growth_lab/misc/311_service_requests"
+
+# Install dependencies (using uv, NOT poetry)
+uv sync
+
+# Linting and formatting
+uv run ruff check .                          # Run linter
+uv run ruff format .                         # Format code
+
+```
+
+## Code Style Guidelines
+
+- **Python**: 3.12+ with type hints required throughout the codebase
+- **Package Management**: Use uv (not poetry), prioritize pyproject.toml
+- **Architecture**: Maintain separation between backend and frontend components
+- **Documentation**: Google-style docstrings
+- **Formatting**: PEP 8, line length 88 characters, double quotes, use ruff
+- **Imports**: Follow section order: standard-library → third-party → first-party → local-folder
+- **Async**: Use async/await for I/O-bound operations and for LLM-related operations
+- **Error Handling**: Implement comprehensive error handling with meaningful messages
+- **Logging**: Use loguru with appropriate log levels for structured logging
+- **Configuration**: YAML files for configuration, environment variables for secrets
+
+
 ## 📊 Data Models
 
 ### Service Request
@@ -170,7 +200,7 @@ TWILIO_PHONE_NUMBER=your_twilio_number
 
 # Supabase Configuration
 SUPABASE_URL=your_supabase_url
-SUPABASE_KEY=your_supabase_key
+SUPABASE_ANON_KEY=your_supabase_key
 
 # Railway Configuration (if needed)
 RAILWAY_TOKEN=your_railway_token

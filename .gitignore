@@ -2,6 +2,34 @@
 .cursorrules
 CLAUDE.md
 data/
+.mcp.json
+
+# Frontend
+# dependencies
+/node_modules
+
+# next.js
+/.next/
+/out/
+
+# production
+/build
+
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# env files
+.env*
+
+# vercel
+.vercel
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
 
 # Created by https://www.toptal.com/developers/gitignore/api/python,nextjs,macos
 # Edit at https://www.toptal.com/developers/gitignore?templates=python,nextjs,macos
