@@ -1,4 +1,3 @@
-import pytest
 from backend.pipeline import get_db_connection
 
 def test_db_connection():
