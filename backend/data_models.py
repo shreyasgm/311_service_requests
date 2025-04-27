@@ -96,8 +96,9 @@ class ProcessedServiceRequest(BaseModel):
 
     @model_validator(mode="after")
     def validate_classification_presence(cls, values):  # noqa: N805
-        validation = values.get("validation")
-        classification = values.get("classification")
+        # In Pydantic v2, values is the model instance, not a dict
+        validation = values.validation
+        classification = values.classification
 
         # If request is valid, it must have a classification
         if validation and validation.is_valid and not classification:
