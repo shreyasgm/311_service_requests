@@ -26,10 +26,11 @@ class ServiceRequest(BaseModel):
         ('Health Department', 'Handles public health concerns'),
         ('Animal Control', 'Manages animal-related issues'),
         ('Other', 'Any other service request not listed above');
-        """
+        """,
     )
     service_subtype: str = Field(
-        ..., description="""
+        ...,
+        description="""
         fill in the request type based on the service type, use these descriptions or similar:
         ('Pothole', 'Report of a pothole in a roadway'),
         ('Noise Complaint', 'Report of excessive noise'),
@@ -41,7 +42,7 @@ class ServiceRequest(BaseModel):
         ('Tree Issue', 'Report of fallen tree or branch'),
         ('Water Leak', 'Report of water leak on public property'),
         ('Rodent Sighting', 'Report of rat or mice infestation')
-        """
+        """,
     )
     location_address: str = Field(..., description="Full street address of the issue")
     location_details: str | None = Field(
