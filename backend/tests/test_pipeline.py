@@ -16,8 +16,8 @@ def test_normal_request():
 
     result = pipeline_311(test_message)
     assert result is not None
-    assert "category" in result
-    assert "location" in result
+    assert "service_type" in result
+    assert "location_address" in result
 
 
 def test_emergency_request():
@@ -32,8 +32,10 @@ def test_emergency_request():
 
     result = pipeline_311(test_message)
     assert result is not None
-    assert "is_emergency" in result
-    assert result["is_emergency"] is True
+    assert "status" in result
+    assert result["status"] == "emergency"
+    assert "classification" in result
+    assert result["classification"]["is_emergency"] is True
 
 
 def test_other_service_request():
@@ -48,4 +50,7 @@ def test_other_service_request():
 
     result = pipeline_311(test_message)
     assert result is not None
-    assert "redirect_service" in result
+    assert "status" in result
+    assert result["status"] == "non_311"
+    assert "classification" in result
+    assert result["classification"]["belongs_in_311"] is False
