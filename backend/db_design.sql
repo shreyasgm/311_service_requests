@@ -165,9 +165,9 @@ WHERE sr.latitude IS NOT NULL AND sr.longitude IS NOT NULL;
 -- Populate statuses
 INSERT INTO statuses (name, description) VALUES
   ('New', 'Request has been received but not yet processed'),
-  ('In Progress', 'Request is being addressed by the department'),
-  ('Resolved', 'Request has been completed'),
-  ('Closed', 'Request has been resolved and verified'),
+  ('In Progress', 'Request is being actively addressed'),
+  ('Open', 'Open request that\'s being worked on'),
+  ('Closed', 'Request has been completed and closed'),
   ('Invalid', 'Request was determined to be invalid or not actionable');
 
 -- Populate priorities

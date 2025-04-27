@@ -21,21 +21,23 @@ class RequestPriority(str, Enum):
 
 
 class RequestStatus(str, Enum):
-    NEW = "new"
-    IN_PROGRESS = "in_progress"
-    RESOLVED = "resolved"
-    CLOSED = "closed"
-    INVALID = "invalid"
+    NEW = "New"
+    IN_PROGRESS = "In Progress"
+    OPEN = "Open"
+    CLOSED = "Closed"
+    INVALID = "Invalid"
 
 
 class Department(BaseModel):
     name: str
     description: str | None = None
+    code: str | None = None
 
 
 class RequestType(BaseModel):
     name: str
     description: str | None = None
+    category: str | None = None
 
 
 class GeoLocation(BaseModel):
