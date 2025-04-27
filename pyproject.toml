@@ -27,6 +27,7 @@ dependencies = [
     "psycopg2>=2.9.10",
     "psycopg2-binary",
     "pytest>=8.3.5",
+    "pytest-asyncio>=0.23.5",
     "supabase>=2.15.0",
 ]
 
@@ -69,3 +70,7 @@ skip-magic-trailing-comma = false
 known-first-party = ["311_service_requests"]
 force-single-line = false
 section-order = ["future", "standard-library", "third-party", "first-party", "local-folder"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "strict"
+asyncio_default_fixture_loop_scope = "function"
