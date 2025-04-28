@@ -1,28 +1,20 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { supabase } from '@/lib/supabase';
+import Papa from 'papaparse';
+import type { ParseResult } from 'papaparse';
 
 interface ServiceRequest {
   id: string;
-  created_at: string;
   raw_input: string;
   summary: string;
-  request_type_id: string;
-  department_id: string;
-  status_id: string;
-  priority_id: string;
-  location: string;
+  request_type: string;
+  department: string;
+  status: string;
+  priority: string;
   address: string;
-  latitude: number;
-  longitude: number;
-  is_emergency: boolean;
   is_valid: boolean;
-}
-
-interface LookupItem {
-  id: string;
-  name: string;
+  created_at?: string;
 }
 
 interface DashboardTableProps {
@@ -34,71 +26,49 @@ export default function DashboardTable({ initialRequests }: DashboardTableProps)
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
-  const [sortField, setSortField] = useState<keyof ServiceRequest>('created_at');
+  const [sortField, setSortField] = useState<keyof ServiceRequest>('id');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
   const itemsPerPage = 10;
   const [filters, setFilters] = useState({
-    request_type_id: '',
-    department_id: '',
-    status_id: '',
-    priority_id: '',
+    request_type: '',
+    department: '',
+    status: '',
+    priority: '',
   });
-  const [requestTypes, setRequestTypes] = useState<LookupItem[]>([]);
-  const [departments, setDepartments] = useState<LookupItem[]>([]);
-  const [statuses, setStatuses] = useState<LookupItem[]>([]);
-  const [priorities, setPriorities] = useState<LookupItem[]>([]);
-
-  const fetchRequests = async () => {
-    try {
-      setLoading(true);
-      let query = supabase
-        .from('service_requests')
-        .select('*')
-        .order(sortField, { ascending: sortDirection === 'asc' })
-        .range((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage - 1);
-      // Apply filters
-      Object.entries(filters).forEach(([key, value]) => {
-        if (value) query = query.eq(key, value);
-      });
-      const { data, error } = await query;
-      if (error) throw error;
-      setRequests(data || []);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
-    } finally {
-      setLoading(false);
-    }
-  };
 
   useEffect(() => {
-    fetchRequests();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filters, sortField, sortDirection, currentPage]);
-
-  useEffect(() => {
-    const fetchLookups = async () => {
-      const [rt, dept, stat, prio] = await Promise.all([
-        supabase.from('request_types').select('id, name'),
-        supabase.from('departments').select('id, name'),
-        supabase.from('statuses').select('id, name'),
-        supabase.from('priorities').select('id, name'),
-      ]);
-      if (rt.data) setRequestTypes(rt.data);
-      if (dept.data) setDepartments(dept.data);
-      if (stat.data) setStatuses(stat.data);
-      if (prio.data) setPriorities(prio.data);
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        const response = await fetch('/evaluation_requests_test.csv');
+        const csvText = await response.text();
+        
+        Papa.parse(csvText, {
+          header: true,
+          complete: (results: ParseResult<ServiceRequest>) => {
+            setRequests(results.data);
+          },
+          error: (error: Error) => {
+            setError(error.message);
+          }
+        });
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'An error occurred');
+      } finally {
+        setLoading(false);
+      }
     };
-    fetchLookups();
+
+    fetchData();
   }, []);
 
-  const handleSort = async (field: keyof ServiceRequest) => {
+  const handleSort = (field: keyof ServiceRequest) => {
     if (field === sortField) {
       setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
     } else {
       setSortField(field);
       setSortDirection('asc');
     }
-    await fetchRequests();
   };
 
   const handleFilterChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -108,8 +78,10 @@ export default function DashboardTable({ initialRequests }: DashboardTableProps)
 
   const getPriorityColor = (priority: string) => {
     switch (priority.toLowerCase()) {
-      case 'high':
+      case 'critical':
         return 'bg-red-100 text-red-800';
+      case 'high':
+        return 'bg-orange-100 text-orange-800';
       case 'medium':
         return 'bg-yellow-100 text-yellow-800';
       case 'low':
@@ -134,6 +106,46 @@ export default function DashboardTable({ initialRequests }: DashboardTableProps)
     }
   };
 
+  // Get unique values for filters
+  const uniqueRequestTypes = [...new Set(requests.map(r => r.request_type))];
+  const uniqueDepartments = [...new Set(requests.map(r => r.department))];
+  const uniqueStatuses = [...new Set(requests.map(r => r.status))];
+  const uniquePriorities = [...new Set(requests.map(r => r.priority))];
+
+  // Filter and sort the data
+  const filteredRequests = requests
+    .filter(request => {
+      return (
+        (!filters.request_type || request.request_type === filters.request_type) &&
+        (!filters.department || request.department === filters.department) &&
+        (!filters.status || request.status === filters.status) &&
+        (!filters.priority || request.priority === filters.priority)
+      );
+    })
+    .sort((a, b) => {
+      const aValue = a[sortField];
+      const bValue = b[sortField];
+      if (aValue === undefined && bValue === undefined) return 0;
+      if (aValue === undefined) return 1;
+      if (bValue === undefined) return -1;
+      if (sortDirection === 'asc') {
+        return aValue > bValue ? 1 : -1;
+      }
+      return aValue < bValue ? 1 : -1;
+    });
+
+  const paginatedRequests = filteredRequests.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
+  const timeData = requests.reduce((acc, request) => {
+    if (!request.created_at) return acc; // skip if no date
+    const date = new Date(request.created_at).toISOString().split('T')[0];
+    acc[date] = (acc[date] || 0) + 1;
+    return acc;
+  }, {} as Record<string, number>);
+
   if (loading) return (
     <div className="flex items-center justify-center min-h-screen">
       <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500" />
@@ -150,76 +162,68 @@ export default function DashboardTable({ initialRequests }: DashboardTableProps)
     <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
       {/* Filter Controls */}
       <div className="p-4 flex flex-wrap gap-4 bg-gray-50 dark:bg-gray-700 border-b dark:border-gray-600">
-        <select name="request_type_id" value={filters.request_type_id} onChange={handleFilterChange} className="border rounded px-2 py-1 dark:bg-gray-600 dark:text-white dark:border-gray-500">
+        <select name="request_type" value={filters.request_type} onChange={handleFilterChange} className="border rounded px-2 py-1 dark:bg-gray-600 dark:text-white dark:border-gray-500">
           <option value="">All Request Types</option>
-          {requestTypes.map(rt => (
-            <option key={rt.id} value={rt.id}>{rt.name}</option>
+          {uniqueRequestTypes.map(type => (
+            <option key={type} value={type}>{type}</option>
           ))}
         </select>
-        <select name="department_id" value={filters.department_id} onChange={handleFilterChange} className="border rounded px-2 py-1 dark:bg-gray-600 dark:text-white dark:border-gray-500">
+        <select name="department" value={filters.department} onChange={handleFilterChange} className="border rounded px-2 py-1 dark:bg-gray-600 dark:text-white dark:border-gray-500">
           <option value="">All Departments</option>
-          {departments.map(dept => (
-            <option key={dept.id} value={dept.id}>{dept.name}</option>
+          {uniqueDepartments.map(dept => (
+            <option key={dept} value={dept}>{dept}</option>
           ))}
         </select>
-        <select name="status_id" value={filters.status_id} onChange={handleFilterChange} className="border rounded px-2 py-1 dark:bg-gray-600 dark:text-white dark:border-gray-500">
+        <select name="status" value={filters.status} onChange={handleFilterChange} className="border rounded px-2 py-1 dark:bg-gray-600 dark:text-white dark:border-gray-500">
           <option value="">All Statuses</option>
-          {statuses.map(stat => (
-            <option key={stat.id} value={stat.id}>{stat.name}</option>
+          {uniqueStatuses.map(status => (
+            <option key={status} value={status}>{status}</option>
           ))}
         </select>
-        <select name="priority_id" value={filters.priority_id} onChange={handleFilterChange} className="border rounded px-2 py-1 dark:bg-gray-600 dark:text-white dark:border-gray-500">
+        <select name="priority" value={filters.priority} onChange={handleFilterChange} className="border rounded px-2 py-1 dark:bg-gray-600 dark:text-white dark:border-gray-500">
           <option value="">All Priorities</option>
-          {priorities.map(prio => (
-            <option key={prio.id} value={prio.id}>{prio.name}</option>
+          {uniquePriorities.map(priority => (
+            <option key={priority} value={priority}>{priority}</option>
           ))}
         </select>
       </div>
-      <div className="overflow-x-auto">
+      <div className="overflow-x-auto overflow-y-auto max-h-[calc(100vh-20rem)]">
         <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
           <thead className="bg-gray-50 dark:bg-gray-700">
             <tr>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">ID</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Created</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Raw Input</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Summary</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Request Type ID</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Department ID</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Status ID</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Priority ID</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Location</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Request Type</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Department</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Status</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Priority</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Address</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Latitude</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Longitude</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Is Emergency</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Is Valid</th>
             </tr>
           </thead>
           <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-            {requests.map((request) => (
+            {paginatedRequests.map((request) => (
               <tr key={request.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">{request.id}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">{new Date(request.created_at).toLocaleString()}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">{request.raw_input}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">{request.summary}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">{
-                  requestTypes.find(rt => rt.id === request.request_type_id)?.name || request.request_type_id
-                }</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">{
-                  departments.find(dept => dept.id === request.department_id)?.name || request.department_id
-                }</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">{
-                  statuses.find(stat => stat.id === request.status_id)?.name || request.status_id
-                }</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">{
-                  priorities.find(prio => prio.id === request.priority_id)?.name || request.priority_id
-                }</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">{request.location}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">{request.address}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">{request.latitude}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">{request.longitude}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">{request.is_emergency ? 'Yes' : 'No'}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">{request.is_valid ? 'Yes' : 'No'}</td>
+                <td className="px-6 py-4 text-sm text-gray-900 dark:text-white">{request.raw_input}</td>
+                <td className="px-6 py-4 text-sm text-gray-900 dark:text-white">{request.summary}</td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">{request.request_type}</td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">{request.department}</td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm">
+                  <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(request.status)}`}>
+                    {request.status}
+                  </span>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm">
+                  <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getPriorityColor(request.priority)}`}>
+                    {request.priority}
+                  </span>
+                </td>
+                <td className="px-6 py-4 text-sm text-gray-900 dark:text-white">{request.address}</td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
+                  {request.is_valid ? 'Yes' : 'No'}
+                </td>
               </tr>
             ))}
           </tbody>
@@ -239,6 +243,7 @@ export default function DashboardTable({ initialRequests }: DashboardTableProps)
           <button
             type="button"
             onClick={() => setCurrentPage(prev => prev + 1)}
+            disabled={currentPage * itemsPerPage >= filteredRequests.length}
             className="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600"
           >
             Next
@@ -247,7 +252,7 @@ export default function DashboardTable({ initialRequests }: DashboardTableProps)
         <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
           <div>
             <p className="text-sm text-gray-700 dark:text-gray-300">
-              Showing page <span className="font-medium">{currentPage}</span>
+              Showing <span className="font-medium">{paginatedRequests.length}</span> of <span className="font-medium">{filteredRequests.length}</span> results
             </p>
           </div>
           <div>
@@ -263,6 +268,7 @@ export default function DashboardTable({ initialRequests }: DashboardTableProps)
               <button
                 type="button"
                 onClick={() => setCurrentPage(prev => prev + 1)}
+                disabled={currentPage * itemsPerPage >= filteredRequests.length}
                 className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm font-medium text-gray-500 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600"
               >
                 Next
