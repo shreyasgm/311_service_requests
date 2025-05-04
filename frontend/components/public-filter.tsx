@@ -92,7 +92,7 @@ export function PublicFilter({ onFilterChange, initialFilter }: PublicFilterProp
             <Button variant="outline" className="border-dashed">
               <span>Filter</span>
               {getActiveFilterCount() > 0 && (
-                <Badge className="ml-2 bg-blue-100 text-blue-800 hover:bg-blue-100">{getActiveFilterCount()}</Badge>
+                <Badge variant="info" className="ml-2">{getActiveFilterCount()}</Badge>
               )}
               <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
             </Button>

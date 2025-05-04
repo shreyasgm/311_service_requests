@@ -155,20 +155,20 @@ export function RequestsTable({ filter }: RequestsTableProps) {
                         </div>
                       </TableCell>
                       <TableCell>
-                        <Badge variant="outline" className="bg-blue-50">
+                        <Badge variant="info">
                           {request.department?.name || "Unknown"}
                         </Badge>
                       </TableCell>
                       <TableCell>
                         <Badge
-                          className={
+                          variant={
                             request.status?.name === "Open"
-                              ? "bg-green-100 text-green-800"
+                              ? "success"
                               : request.status?.name === "In Progress"
-                                ? "bg-yellow-100 text-yellow-800"
+                                ? "warning"
                                 : request.status?.name === "Closed"
-                                  ? "bg-gray-100 text-gray-800"
-                                  : "bg-blue-100 text-blue-800"
+                                  ? "neutral"
+                                  : "info"
                           }
                         >
                           {request.status?.name || "Unknown"}
@@ -176,16 +176,16 @@ export function RequestsTable({ filter }: RequestsTableProps) {
                       </TableCell>
                       <TableCell>
                         <Badge
-                          className={
+                          variant={
                             request.priority?.name === "Critical"
-                              ? "bg-red-100 text-red-800"
+                              ? "error"
                               : request.priority?.name === "High"
-                                ? "bg-orange-100 text-orange-800"
+                                ? "error"
                                 : request.priority?.name === "Medium"
-                                  ? "bg-yellow-100 text-yellow-800"
+                                  ? "warning"
                                   : request.priority?.name === "Low"
-                                    ? "bg-green-100 text-green-800"
-                                    : "bg-blue-100 text-blue-800"
+                                    ? "success"
+                                    : "info"
                           }
                         >
                           {request.priority?.name || "Unknown"}

@@ -124,7 +124,7 @@ export default function PublicListView() {
                           </div>
                         </TableCell>
                         <TableCell>
-                          <Badge variant="outline" className="bg-blue-50">
+                          <Badge variant="info">
                             {request.department?.name || "Unknown"}
                           </Badge>
                         </TableCell>

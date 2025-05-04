@@ -137,36 +137,36 @@ export function RequestDetail({ requestId }: RequestDetailProps) {
 
         <div className="flex flex-wrap gap-2">
           <Badge
-            className={
+            variant={
               request.status?.name === "Open"
-                ? "bg-green-100 text-green-800"
+                ? "success"
                 : request.status?.name === "In Progress"
-                  ? "bg-yellow-100 text-yellow-800"
+                  ? "warning"
                   : request.status?.name === "Closed"
-                    ? "bg-gray-100 text-gray-800"
-                    : "bg-blue-100 text-blue-800"
+                    ? "neutral"
+                    : "info"
             }
           >
             {request.status?.name || "Unknown Status"}
           </Badge>
 
           <Badge
-            className={
+            variant={
               request.priority?.name === "Critical"
-                ? "bg-red-100 text-red-800"
+                ? "error"
                 : request.priority?.name === "High"
-                  ? "bg-orange-100 text-orange-800"
+                  ? "error"
                   : request.priority?.name === "Medium"
-                    ? "bg-yellow-100 text-yellow-800"
+                    ? "warning"
                     : request.priority?.name === "Low"
-                      ? "bg-green-100 text-green-800"
-                      : "bg-blue-100 text-blue-800"
+                      ? "success"
+                      : "info"
             }
           >
             {request.priority?.name || "Unknown Priority"}
           </Badge>
 
-          <Badge variant="outline" className="bg-blue-50">
+          <Badge variant="info">
             {request.department?.name || "Unknown Department"}
           </Badge>
         </div>
@@ -289,14 +289,14 @@ export function RequestDetail({ requestId }: RequestDetailProps) {
                             <p className="font-medium">
                               Status changed to{" "}
                               <Badge
-                                className={
+                                variant={
                                   item.status?.name === "Open"
-                                    ? "bg-green-100 text-green-800"
+                                    ? "success"
                                     : item.status?.name === "In Progress"
-                                      ? "bg-yellow-100 text-yellow-800"
+                                      ? "warning"
                                       : item.status?.name === "Closed"
-                                        ? "bg-gray-100 text-gray-800"
-                                        : "bg-blue-100 text-blue-800"
+                                        ? "neutral"
+                                        : "info"
                                 }
                               >
                                 {item.status?.name || "Unknown"}
