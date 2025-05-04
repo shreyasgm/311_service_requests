@@ -14,7 +14,13 @@ import { Button } from "@/components/ui/button"
 import { ExternalLink } from "lucide-react"
 
 export default function PublicListView() {
-  const [filter, setFilter] = useState<MapFilter>({})
+  const [filter, setFilter] = useState<MapFilter>({
+    status: [
+      "97ed0b6e-0734-4154-ae5e-cd2323ed6207", // Open
+      "03ebe79f-8a7e-4db0-a40d-4aa61509914f", // New
+      "2af5c432-9f36-4df2-a032-b7fdfc35a17a"  // In Progress
+    ]
+  })
   const [requests, setRequests] = useState<ServiceRequest[]>([])
   const [loading, setLoading] = useState(true)
   const [sortField, setSortField] = useState<"created_at" | "request_type">("created_at")
@@ -62,7 +68,7 @@ export default function PublicListView() {
           <p className="text-gray-600 mt-2">Browse and filter current open service requests across the city.</p>
         </div>
 
-        <PublicFilter onFilterChange={setFilter} />
+        <PublicFilter onFilterChange={setFilter} initialFilter={filter} />
 
         {loading ? (
           <div className="h-64 flex items-center justify-center bg-white rounded-lg shadow">

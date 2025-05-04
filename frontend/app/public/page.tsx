@@ -10,7 +10,13 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { AlertCircle } from "lucide-react"
 
 export default function PublicPortal() {
-  const [filter, setFilter] = useState<MapFilter>({})
+  const [filter, setFilter] = useState<MapFilter>({
+    status: [
+      "97ed0b6e-0734-4154-ae5e-cd2323ed6207", // Open
+      "03ebe79f-8a7e-4db0-a40d-4aa61509914f", // New
+      "2af5c432-9f36-4df2-a032-b7fdfc35a17a"  // In Progress
+    ]
+  })
   const [error, setError] = useState<string | null>(null)
 
   return (
@@ -33,7 +39,7 @@ export default function PublicPortal() {
           </Alert>
         )}
 
-        <PublicFilter onFilterChange={setFilter} />
+        <PublicFilter onFilterChange={setFilter} initialFilter={filter} />
 
         <ServiceRequestMap filter={filter} />
 

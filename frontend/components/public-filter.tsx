@@ -23,9 +23,10 @@ interface FilterOptions {
 
 interface PublicFilterProps {
   onFilterChange: (filter: MapFilter) => void
+  initialFilter?: MapFilter
 }
 
-export function PublicFilter({ onFilterChange }: PublicFilterProps) {
+export function PublicFilter({ onFilterChange, initialFilter }: PublicFilterProps) {
   const [open, setOpen] = useState(false)
   const [filterOptions, setFilterOptions] = useState<FilterOptions>({
     statuses: [],
@@ -33,12 +34,14 @@ export function PublicFilter({ onFilterChange }: PublicFilterProps) {
     requestTypes: [],
   })
 
-  const [filter, setFilter] = useState<MapFilter>({
+  // Initialize filter state from parent component's filter prop
+  const [filter, setFilter] = useState<MapFilter>(initialFilter || {
     status: [],
     department: [],
     requestType: [],
   })
 
+  // Load filter options from the API
   useEffect(() => {
     async function loadFilterOptions() {
       const options = await getFilterOptions()
@@ -46,6 +49,11 @@ export function PublicFilter({ onFilterChange }: PublicFilterProps) {
     }
 
     loadFilterOptions()
+  }, [])
+  
+  // Sync with parent's filter on mount (only once)
+  useEffect(() => {
+    onFilterChange(filter)
   }, [])
 
   const handleFilterChange = (type: keyof MapFilter, value: string) => {
