@@ -16,10 +16,22 @@ interface DashboardFilterProps {
   onFilterChange: (filter: MapFilter) => void
 }
 
+interface FilterOption {
+  id: string;
+  name: string;
+}
+
+interface FilterOptions {
+  statuses: FilterOption[];
+  departments: FilterOption[];
+  requestTypes: FilterOption[];
+  priorities: FilterOption[];
+}
+
 export function DashboardFilter({ onFilterChange }: DashboardFilterProps) {
   const [open, setOpen] = useState(false)
   const [dateOpen, setDateOpen] = useState(false)
-  const [filterOptions, setFilterOptions] = useState({
+  const [filterOptions, setFilterOptions] = useState<FilterOptions>({
     statuses: [],
     departments: [],
     requestTypes: [],
@@ -112,7 +124,7 @@ export function DashboardFilter({ onFilterChange }: DashboardFilterProps) {
             <Button variant="outline" className="border-dashed">
               <span>Filter</span>
               {getActiveFilterCount() > 0 && (
-                <Badge className="ml-2 bg-blue-100 text-blue-800 hover:bg-blue-100">{getActiveFilterCount()}</Badge>
+                <Badge variant="info" className="ml-2">{getActiveFilterCount()}</Badge>
               )}
               <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
             </Button>
@@ -239,7 +251,7 @@ export function DashboardFilter({ onFilterChange }: DashboardFilterProps) {
               <Calendar className="mr-2 h-4 w-4" />
               <span>Date Range</span>
               {filter.dateRange && filter.dateRange[0] && (
-                <Badge className="ml-2 bg-blue-100 text-blue-800 hover:bg-blue-100">
+                <Badge variant="info" className="ml-2">
                   {filter.dateRange[0] && filter.dateRange[1]
                     ? `${format(filter.dateRange[0], "MMM d")} - ${format(filter.dateRange[1], "MMM d")}`
                     : filter.dateRange[0]
