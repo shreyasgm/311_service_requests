@@ -12,23 +12,33 @@ export async function middleware(req: NextRequest) {
   const res = NextResponse.next()
   
   try {
+    // Check for development session cookie first
+    if (process.env.NODE_ENV === 'development') {
+      const devSession = req.cookies.get('sb-dev-session')
+      if (devSession) {
+        // If we have a dev session cookie, allow access
+        return res
+      }
+    }
+
     // Create a Supabase client configured to use cookies
     const supabase = createServerClient(
       SUPABASE_URL,
       SUPABASE_ANON_KEY,
       {
         cookies: {
-          get(name: string) {
-            return req.cookies.get(name)?.value
+          get(name) {
+            const cookie = req.cookies.get(name)
+            return cookie?.value
           },
-          set(name: string, value: string, options: { path: string; maxAge: number; domain?: string; sameSite?: 'lax' | 'strict' | 'none'; secure?: boolean }) {
+          set(name, value, options) {
             res.cookies.set({
               name,
               value,
               ...options,
             })
           },
-          remove(name: string, options: { path: string; domain?: string }) {
+          remove(name, options) {
             res.cookies.set({
               name,
               value: '',

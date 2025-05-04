@@ -28,6 +28,20 @@ export function AuthForm() {
     setSuccess(false)
 
     try {
+      // Development bypass - only works in development environment
+      if (process.env.NODE_ENV === 'development' && 
+          email === 'dev@example.com' && 
+          password === 'devpassword') {
+        // Set a development session cookie
+        document.cookie = `sb-dev-session=dev; path=/; max-age=86400`
+        setSuccess(true)
+        router.refresh()
+        setTimeout(() => {
+          router.push("/dashboard")
+        }, 500)
+        return
+      }
+
       const supabase = createBrowserClient(SUPABASE_URL, SUPABASE_ANON_KEY)
       
       // Attempt to sign in

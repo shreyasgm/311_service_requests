@@ -270,6 +270,17 @@ The Twilio integration should handle the complete phone call workflow:
 
 The integration should handle various edge cases like unclear speech, background noise, and disconnections gracefully.
 
+### Development Authentication
+
+For development purposes, a simple authentication bypass is available:
+
+- **Development Credentials**:
+  - Email: `dev@example.com`
+  - Password: `devpassword`
+- This bypass only works in development mode (`NODE_ENV === 'development'`)
+- The development session lasts for 24 hours
+- Production authentication remains secure and unchanged
+
 ### 5. Frontend Implementation
 
 #### 5.1 Next.js Web Interface
