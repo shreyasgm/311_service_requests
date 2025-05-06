@@ -30,7 +30,10 @@ from backend.extractor import ServiceRequest, extract_311_request
 
 def get_db_connection():
     """
-    Create a connection to the database using direct parameter passing.
+    Create a connection to the database using direct connection with IPv4 preference.
+
+    This function tries to connect to Supabase using direct connection parameters
+    with specific IPv4 settings to avoid IPv6 connection issues.
 
     Returns:
         psycopg2.connection: Database connection
@@ -43,10 +46,18 @@ def get_db_connection():
     db_name = os.environ.get("DB_NAME")
     db_user = os.environ.get("DB_USER")
     db_password = os.environ.get("DB_PASSWORD")
+
+    # Connection string can be used as an alternative to individual parameters
     connection_string = os.environ.get("SUPABASE_CONNECTION_STRING")
 
-    # Check if all required parameters are present
-    if not all([db_host, db_port, db_name, db_user, db_password]):
+    # Get pooler endpoint if available (for Supabase pgbouncer)
+    pooler_host = os.environ.get("DB_POOLER_HOST", db_host)
+    pooler_port = os.environ.get("DB_POOLER_PORT", "6543")  # Default pgbouncer port
+
+    # Check if required parameters are present
+    if not connection_string and not all(
+        [db_host, db_port, db_name, db_user, db_password]
+    ):
         missing_params = []
         if not db_host:
             missing_params.append("DB_HOST")
@@ -63,51 +74,111 @@ def get_db_connection():
         )
 
     conn = None  # Initialize connection variable
+
+    # Define connection attempts in order of preference:
+    # 1. Connection via connection string (if provided)
+    # 2. Connection via pgbouncer pooler
+    # 3. Direct connection with IPv4 preference
+
+    connection_errors = []
+
     try:
-        # Attempt to establish the connection
-        print(
-            f"Attempting to connect to database '{db_name}' on '{db_host}:{db_port}'..."
+        # Attempt 1: Try connection string if available
+        if connection_string:
+            try:
+                print("Attempting to connect using connection string...")
+                # For connection string, we can't easily modify it to add IPv4 preference
+                # without potentially breaking its format, so we use it as is
+                conn = psycopg2.connect(connection_string)
+                print("Connection via connection string established.")
+                return conn
+            except psycopg2.Error as e:
+                error_msg = f"Connection via connection string failed: {e}"
+                print(error_msg)
+                connection_errors.append(error_msg)
+                # Continue to next attempt
+
+        # Attempt 2: Try connection via pgbouncer pooler
+        if pooler_host:
+            try:
+                print(
+                    f"Attempting to connect via pgbouncer on {pooler_host}:{pooler_port}..."
+                )
+                conn = psycopg2.connect(
+                    host=pooler_host,
+                    port=pooler_port,
+                    dbname=db_name,
+                    user=db_user,
+                    password=db_password,
+                    # For pgbouncer in transaction mode
+                    application_name="city311ai",
+                )
+                print("Connection via pgbouncer established.")
+                return conn
+            except psycopg2.Error as e:
+                error_msg = f"Connection via pgbouncer failed: {e}"
+                print(error_msg)
+                connection_errors.append(error_msg)
+                # Continue to next attempt
+
+        # Attempt 3: Direct connection with IPv4 preference
+        print(f"Attempting direct connection to {db_host}:{db_port}...")
+
+        # Construct DSN with IPv4 preference
+        # Using DSN construction to ensure host resolution prefers IPv4
+        # This alternative approach doesn't rely on PostgreSQL options
+        import socket
+
+        # Force IPv4 address resolution
+        for res in socket.getaddrinfo(
+            db_host, int(db_port), socket.AF_INET, socket.SOCK_STREAM
+        ):
+            _, _, _, _, addr = res
+            ipv4_host, _ = addr
+            print(f"Resolved IPv4 address: {ipv4_host}")
+            try:
+                # Connect using the resolved IPv4 address
+                conn = psycopg2.connect(
+                    host=ipv4_host,
+                    port=db_port,
+                    dbname=db_name,
+                    user=db_user,
+                    password=db_password,
+                    application_name="city311ai",
+                    keepalives=1,
+                    keepalives_idle=60,
+                    keepalives_interval=60,
+                    keepalives_count=60,
+                )
+                print("Connection via direct IPv4 established.")
+
+                # Verify the connection works
+                with conn.cursor() as cur:
+                    cur.execute("SELECT 1;")
+
+                return conn
+            except psycopg2.Error as e:
+                error_msg = f"Direct IPv4 connection to {ipv4_host} failed: {e}"
+                print(error_msg)
+                connection_errors.append(error_msg)
+                # Try the next IPv4 address if available
+                continue
+
+        # If we reach here, all connection attempts have failed
+        raise ConnectionError(
+            f"All connection attempts failed: {'; '.join(connection_errors)}"
         )
-        conn = psycopg2.connect(
-            host=db_host,
-            database=db_name,
-            user=db_user,
-            password=db_password,
-            port=db_port,
-        )
-        print("Connection established. Verifying...")
-
-        # Verify the connection is alive and working by executing a simple query
-        # Use 'with' statement for cursor to ensure it's closed automatically
-        with conn.cursor() as cur:
-            cur.execute("SELECT 1;")  # Simple, standard check
-            # Optionally fetch the result if needed, but execution alone confirms connectivity
-            # result = cur.fetchone()
-            # print(f"Verification query result: {result}")
-
-        print("Database connection verified successfully.")
-        # Return the active connection object
-        return conn
-
-    except psycopg2.Error as e:
-        # Handle specific psycopg2 errors (connection, credentials, etc.)
-        print(f"Database Error: {e}")
-        # Close the connection if it was partially opened before the error occurred
-        if conn:
-            conn.close()
-            print("Database connection closed due to error.")
-        # Raise a more general ConnectionError, wrapping the original exception
-        raise ConnectionError(f"Failed to connect to or verify database: {e}") from e
 
     except Exception as e:
-        # Handle any other unexpected errors during the process
+        # Handle any other unexpected errors
         print(f"An unexpected error occurred: {e}")
         if conn:
             conn.close()
             print("Database connection closed due to unexpected error.")
-        # Re-raise the exception, possibly wrapped in ConnectionError for consistency
+        # Re-raise the exception with all attempted connection errors
         raise ConnectionError(
-            f"An unexpected error occurred during DB connection: {e}"
+            f"An unexpected error occurred during DB connection: {e}. "
+            f"Previous errors: {'; '.join(connection_errors)}"
         ) from e
 
 

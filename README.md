@@ -109,6 +109,9 @@ uv sync
 uv run ruff check .                          # Run linter
 uv run ruff format .                         # Format code
 
+# Process a 311 complaint and insert it into the database
+uv run python -m backend.pipeline "Your complaint text here" --save-to-db
+
 # Running the frontend
 cd frontend && pnpm dev
 

@@ -22,8 +22,16 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <head>
         {/* Load Leaflet first, then the heatmap plugin */}
-        <Script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" strategy="beforeInteractive" />
-        <Script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js" strategy="afterInteractive" />
+        <Script 
+          src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" 
+          strategy="beforeInteractive"
+          crossOrigin="anonymous"
+        />
+        <Script 
+          src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js" 
+          strategy="afterInteractive"
+          crossOrigin="anonymous"
+        />
       </head>
       <body className={inter.className}>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
